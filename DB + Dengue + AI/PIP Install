@@ -1,0 +1,16 @@
+#Environment
+pip install pipenv
+pipenv shell
+
+#Install
+pip install langchain-community
+pip install streamlit
+pip install streamlit-chat
+pip install langchain
+pip install --upgrade langchain
+pip install langchain_experimental
+pip install --upgrade langchain langchain_community
+
+#Ejecutar
+streamlit run c_front_end.py
+
