@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cargador de archivos Excel</title>
+    <title>Cargador de archivos Dengue</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
         body {
@@ -18,11 +18,11 @@
 
         #container {
             background-color: #fff;
-            padding: 30px;
+            padding: 100px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
             text-align: center;
-            max-width: 400px;
+            max-width: 500px;
             width: 100%;
         }
 
@@ -81,6 +81,7 @@
             line-height: 20px;
             color: white;
         }
+
         .file-list {
             list-style-type: none;
             padding: 0;
@@ -112,7 +113,8 @@
 </head>
 <body>
 <div id="container">
-    <h1>Cargador de archivos Excel</h1>
+    <img src="public/prueba.JPG" alt="Imagen del Dengue">
+    <h1>Cargador de archivos Dengue</h1>
     <form id="uploadForm">
         <label class="file-upload">
             <i class="fas fa-file-upload"></i> Seleccionar archivo Excel
@@ -120,12 +122,11 @@
         </label>
         <ul class="file-list"></ul>
         <button type="button" id="upload-btn" disabled>Cargar archivos</button>
+        <div id="progress">
+            <div id="progress-bar">0%</div>
+        </div>
     </form>
-    <div id="progress">
-        <div id="progress-bar">0%</div>
-    </div>
     <p id="message"></p>
-    <!-- Nuevo botón para crear la tabla -->
     <button type="button" id="create-table-btn">Crear tabla "epidemia"</button>
     <p id="create-table-message"></p>
 </div>
@@ -144,8 +145,13 @@
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/create-table', true);
 
+
         xhr.onload = () => {
             if (xhr.status === 200) {
+
+                const progress = Math.round((event.loaded / event.total) * 100);
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${progress}%`;
                 createTableMessage.textContent = 'Tabla "epidemia" creada con éxito';
             } else {
                 createTableMessage.textContent = 'Error al crear la tabla "epidemia"';
@@ -166,6 +172,9 @@
         if (files.length > 0) {
             uploadBtn.disabled = false;
             message.textContent = '';
+            createTableMessage.textContent = '';
+            progressBar.style.width = '50%';
+            progressBar.textContent = '50%';
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
@@ -175,6 +184,8 @@
                     fileList.appendChild(li);
                 } else {
                     message.textContent = 'Por favor, seleccione archivos Excel válidos.';
+                    progressBar.style.width = '0%';
+                    progressBar.textContent = '0%';
                     uploadBtn.disabled = true;
                 }
             }
@@ -210,8 +221,6 @@
                 fileInput.value = ''; // Limpiar el input de archivo
                 fileList.innerHTML = ''; // Limpiar la lista de archivos
                 uploadBtn.disabled = true;
-                progressBar.style.width = '0%';
-                progressBar.textContent = '0%';
             } else {
                 message.textContent = 'Error al cargar los archivos Excel';
             }
