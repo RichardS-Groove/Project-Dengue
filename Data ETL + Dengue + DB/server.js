@@ -177,7 +177,7 @@ app.get('/favicon.ico', (req, res) => {
 });
 
 // Ruta para obtener todos los datos de la tabla "epidemia"
-app.get('/epidemia', async (req, res) => {
+app.get('/epidemia/dengue', async (req, res) => {
     try {
         // Consulta SQL para seleccionar todos los registros de la tabla "epidemia"
         const sql = 'SELECT * FROM epidemia';
