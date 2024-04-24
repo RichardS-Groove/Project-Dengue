@@ -4,7 +4,7 @@ const uploadBtn = document.getElementById('upload-btn');
 const message = document.getElementById('message');
 const progressBar = document.getElementById('progress-bar');
 const fileList = document.querySelector('.file-list');
-// Agregar función para crear la tabla "epidemia"
+// Agregar función para crear la tabla "dengue"
 const createTableBtn = document.getElementById('create-table-btn');
 const createTableMessage = document.getElementById('create-table-message');
 
@@ -19,9 +19,9 @@ createTableBtn.addEventListener('click', () => {
             const progress = Math.round((event.loaded / event.total) * 100);
             progressBar.style.width = `${progress}%`;
             progressBar.textContent = `${progress}%`;
-            createTableMessage.textContent = 'Tabla "epidemia" creada con éxito';
+            createTableMessage.textContent = 'Tabla "dengue" creada con éxito';
         } else {
-            createTableMessage.textContent = 'Error al crear la tabla "epidemia"';
+            createTableMessage.textContent = 'Error al crear la tabla "dengue"';
         }
     };
 

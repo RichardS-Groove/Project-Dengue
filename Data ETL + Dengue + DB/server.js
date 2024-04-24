@@ -13,7 +13,7 @@ const db = mysql.createConnection({
     port: 3306,
     user: 'root',
     password: 'Sofiaazul3',
-    database: 'dengue'
+    database: 'epidemia'
 });
 
 // Configuración de Multer
@@ -41,10 +41,9 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-// ... (existing routes)
 
-// Define la consulta SQL para crear la tabla "epidemia"
-const createTableSql = `CREATE TABLE IF NOT EXISTS epidemia (
+// Define la consulta SQL para crear la tabla "dengue"
+const createTableSql = `CREATE TABLE IF NOT EXISTS dengue (
     id INT AUTO_INCREMENT PRIMARY KEY,
     provincia_nombre VARCHAR(255),
     departamento_nombre VARCHAR(255),
@@ -61,14 +60,15 @@ const createTableSql = `CREATE TABLE IF NOT EXISTS epidemia (
     Poblacion_X_1000 VARCHAR(255)
 );`;
 
-// Manejador de la solicitud para crear la tabla "epidemia"
+// Manejador de la solicitud para crear la tabla "dengue"
 app.post('/create-table', async (req, res) => {
     try {
+
         // Ejecutar la consulta SQL para crear la tabla
         await db.query(createTableSql);
 
         // Registro de éxito en la consola
-        console.log('Tabla "epidemia" creada');
+        console.log('Tabla "dengue" creada');
 
         // Responder con un JSON indicando el éxito
         res.json({success: true});
@@ -119,7 +119,7 @@ app.post('/upload', uploadMultipleFiles, async (req, res) => {
 
                     console.log('Insertando registro:', data);
 
-                    const sql = `INSERT INTO epidemia (provincia_nombre, departamento_nombre, ano_inicio, ano_fin, semanas_epidemiologicas, evento_nombre, grupo_edad_desc, cantidad_casos, tasa_de_Incidencia, Confirmados_Laboratorio, Muertes, Letalidad, Poblacion_X_1000)
+                    const sql = `INSERT INTO dengue (provincia_nombre, departamento_nombre, ano_inicio, ano_fin, semanas_epidemiologicas, evento_nombre, grupo_edad_desc, cantidad_casos, tasa_de_Incidencia, Confirmados_Laboratorio, Muertes, Letalidad, Poblacion_X_1000)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
                     await db.query(sql, [
@@ -176,19 +176,19 @@ app.get('/favicon.ico', (req, res) => {
     res.status(204).end();
 });
 
-// Ruta para obtener todos los datos de la tabla "epidemia"
+// Ruta para obtener todos los datos de la tabla "dengue"
 app.get('/epidemia/dengue', async (req, res) => {
     try {
-        // Consulta SQL para seleccionar todos los registros de la tabla "epidemia"
-        const sql = 'SELECT * FROM epidemia';
+        // Consulta SQL para seleccionar todos los registros de la tabla "dengue"
+        const sql = 'SELECT * FROM dengue';
 
         // Ejecuta la consulta SQL
         db.query(sql, (error, results, fields) => {
             if (error) {
-                console.error('Error al obtener los datos de la tabla "epidemia":', error);
+                console.error('Error al obtener los datos de la tabla "dengue":', error);
                 return res.status(500).json({
                     success: false,
-                    error: 'Error al obtener los datos de la tabla "epidemia"'
+                    error: 'Error al obtener los datos de la tabla "dengue"'
                 });
             }
 
@@ -196,7 +196,7 @@ app.get('/epidemia/dengue', async (req, res) => {
             res.json({success: true, data: results});
         });
     } catch (error) {
-        console.error('Error al obtener los datos de la tabla "epidemia":', error);
-        res.status(500).json({success: false, error: 'Error al obtener los datos de la tabla "epidemia"'});
+        console.error('Error al obtener los datos de la tabla "dengue":', error);
+        res.status(500).json({success: false, error: 'Error al obtener los datos de la tabla "dengue"'});
     }
 });
