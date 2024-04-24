@@ -46,8 +46,20 @@ app.get('/', (req, res) => {
 
 // Define la consulta SQL para crear la tabla "epidemia"
 const createTableSql = `CREATE TABLE IF NOT EXISTS epidemia (
-    pais_nombre VARCHAR(255) NOT NULL,
-    provincia_nombre VARCHAR(255) NOT NULL
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    provincia_nombre VARCHAR(255),
+    departamento_nombre VARCHAR(255),
+    ano_inicio VARCHAR(255),
+    ano_fin VARCHAR(255),
+    semanas_epidemiologicas VARCHAR(255),
+    evento_nombre VARCHAR(255),
+    grupo_edad_desc VARCHAR(255),
+    cantidad_casos VARCHAR(255),
+    tasa_de_Incidencia VARCHAR(255),
+    Confirmados_Laboratorio VARCHAR(255),
+    Muertes VARCHAR(255),
+    Letalidad VARCHAR(255),
+    Poblacion_X_1000 VARCHAR(255)
 );`;
 
 // Manejador de la solicitud para crear la tabla "epidemia"
@@ -90,17 +102,41 @@ app.post('/upload', uploadMultipleFiles, async (req, res) => {
                 for (const record of records) {
                     console.log('Registro a insertar:', record);
                     const data = {
-                        pais_nombre: record['pais_nombre'],
                         provincia_nombre: record['provincia_nombre'],
-                        // ... other data mapping if needed
+                        departamento_nombre: record['departamento_nombre'],
+                        ano_inicio: record['ano_inicio'],
+                        ano_fin: record['ano_fin'],
+                        semanas_epidemiologicas: record['semanas_epidemiologicas'],
+                        evento_nombre: record['evento_nombre'],
+                        grupo_edad_desc: record['grupo_edad_desc'],
+                        cantidad_casos: record['cantidad_casos'],
+                        tasa_de_Incidencia: record['tasa_de_Incidencia'],
+                        Confirmados_Laboratorio: record['Confirmados_Laboratorio'],
+                        Muertes: record['Muertes'],
+                        Letalidad: record['Letalidad'],
+                        Poblacion_X_1000: record['Poblacion_X_1000']
                     };
 
                     console.log('Insertando registro:', data);
 
-                    const sql = `INSERT INTO epidemia (pais_nombre, provincia_nombre)
-                                 VALUES (?, ?);`;
+                    const sql = `INSERT INTO epidemia (provincia_nombre, departamento_nombre, ano_inicio, ano_fin, semanas_epidemiologicas, evento_nombre, grupo_edad_desc, cantidad_casos, tasa_de_Incidencia, Confirmados_Laboratorio, Muertes, Letalidad, Poblacion_X_1000)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
-                    await db.query(sql, [data.pais_nombre, data.provincia_nombre]);
+                    await db.query(sql, [
+                        data.provincia_nombre,
+                        data.departamento_nombre,
+                        data.ano_inicio,
+                        data.ano_fin,
+                        data.semanas_epidemiologicas,
+                        data.evento_nombre,
+                        data.grupo_edad_desc,
+                        data.cantidad_casos,
+                        data.tasa_de_Incidencia,
+                        data.Confirmados_Laboratorio,
+                        data.Muertes,
+                        data.Letalidad,
+                        data.Poblacion_X_1000
+                    ]);
                 }
                 console.log('Todos los registros insertados correctamente');
             } catch (error) {
