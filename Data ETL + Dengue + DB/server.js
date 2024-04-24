@@ -176,3 +176,27 @@ app.get('/favicon.ico', (req, res) => {
     res.status(204).end();
 });
 
+// Ruta para obtener todos los datos de la tabla "epidemia"
+app.get('/epidemia', async (req, res) => {
+    try {
+        // Consulta SQL para seleccionar todos los registros de la tabla "epidemia"
+        const sql = 'SELECT * FROM epidemia';
+
+        // Ejecuta la consulta SQL
+        db.query(sql, (error, results, fields) => {
+            if (error) {
+                console.error('Error al obtener los datos de la tabla "epidemia":', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Error al obtener los datos de la tabla "epidemia"'
+                });
+            }
+
+            // Envía los resultados como respuesta en formato JSON
+            res.json({success: true, data: results});
+        });
+    } catch (error) {
+        console.error('Error al obtener los datos de la tabla "epidemia":', error);
+        res.status(500).json({success: false, error: 'Error al obtener los datos de la tabla "epidemia"'});
+    }
+});
