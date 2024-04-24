@@ -4,6 +4,9 @@ const mysql = require('mysql');
 const fs = require('fs');
 const xlsx = require('xlsx');
 
+// Configuración para servir archivos estáticos desde la carpeta 'public'
+app.use(express.static('public'));
+
 // Configuración de la conexión a MySQL
 const db = mysql.createConnection({
     host: 'localhost',
@@ -31,6 +34,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+
 
 // Ruta para la página principal
 app.get('/', (req, res) => {
