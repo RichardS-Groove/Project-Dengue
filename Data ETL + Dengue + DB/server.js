@@ -40,7 +40,6 @@ app.use(express.urlencoded({extended: true}));
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
-// ... (other imports)
 
 // ... (existing routes)
 
@@ -86,6 +85,7 @@ app.post('/create-table', async (req, res) => {
 // Ruta para la carga de archivos Excel
 app.post('/upload', uploadMultipleFiles, async (req, res) => {
     try {
+
         const excelFiles = req.files;
         console.log('Archivos Excel cargados:', excelFiles.length);
 
@@ -120,7 +120,7 @@ app.post('/upload', uploadMultipleFiles, async (req, res) => {
                     console.log('Insertando registro:', data);
 
                     const sql = `INSERT INTO epidemia (provincia_nombre, departamento_nombre, ano_inicio, ano_fin, semanas_epidemiologicas, evento_nombre, grupo_edad_desc, cantidad_casos, tasa_de_Incidencia, Confirmados_Laboratorio, Muertes, Letalidad, Poblacion_X_1000)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
                     await db.query(sql, [
                         data.provincia_nombre,

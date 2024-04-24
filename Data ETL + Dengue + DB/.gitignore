@@ -177,3 +177,5 @@ logs
 .env
 
 # Cualquier otro archivo o carpeta que desees ignorar
+
+uploads/
