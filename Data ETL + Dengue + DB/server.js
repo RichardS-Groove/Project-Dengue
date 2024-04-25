@@ -172,9 +172,9 @@ const startServer = () => {
 
 startServer();
 
-app.get('/favicon.ico', (req, res) => {
+/*app.get('/favicon.ico', (req, res) => {
     res.status(204).end();
-});
+});*/
 
 // Ruta para obtener todos los datos de la tabla "dengue"
 app.get('/epidemia/dengue', async (req, res) => {
