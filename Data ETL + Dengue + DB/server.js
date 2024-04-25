@@ -3,6 +3,10 @@ const app = express();
 const mysql = require('mysql');
 const fs = require('fs');
 const xlsx = require('xlsx');
+const puppeteer = require('puppeteer');
+const { createWorker } = require('tesseract.js');
+
+const worker = createWorker();  // Create the worker object
 
 // Configuración para servir archivos estáticos desde la carpeta 'public'
 app.use(express.static('public'));
@@ -20,7 +24,8 @@ const db = mysql.createConnection({
 const multer = require('multer');
 const upload = multer({
     dest: './uploads/',
-    preservePath: true
+    preservePath: true,
+    limits: {fileSize: 10 * 1024 * 1024}, // Límite de tamaño de archivo (en bytes), aquí 10 MB
 });
 
 const uploadMultipleFiles = upload.array('excelfiles', 10); // Agrega esta línea
@@ -172,9 +177,6 @@ const startServer = () => {
 
 startServer();
 
-/*app.get('/favicon.ico', (req, res) => {
-    res.status(204).end();
-});*/
 
 // Ruta para obtener todos los datos de la tabla "dengue"
 app.get('/epidemia/dengue', async (req, res) => {
@@ -198,5 +200,119 @@ app.get('/epidemia/dengue', async (req, res) => {
     } catch (error) {
         console.error('Error al obtener los datos de la tabla "dengue":', error);
         res.status(500).json({success: false, error: 'Error al obtener los datos de la tabla "dengue"'});
+    }
+});
+
+// Define la consulta SQL para crear la tabla "scraping_ocr_dengue"
+const createScrapingOcrTableSql = `CREATE TABLE IF NOT EXISTS scraping_ocr_dengue (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    origen VARCHAR(255) NOT NULL,
+    tipo VARCHAR(50) NOT NULL,
+    titulo VARCHAR(255),
+    contenido TEXT,
+    fecha_obtencion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    url VARCHAR(255),
+    ruta_archivo VARCHAR(255)
+);`;
+
+// Manejador de la solicitud para crear la tabla "scraping_ocr_dengue"
+app.post('/create-scraping-ocr-table', async (req, res) => {
+    try {
+        // Ejecutar la consulta SQL para crear la tabla
+        await db.query(createScrapingOcrTableSql);
+
+        // Registro de éxito en la consola
+        console.log('Tabla "scraping_ocr_dengue" creada');
+
+        // Responder con un JSON indicando el éxito
+        res.json({success: true});
+    } catch (error) {
+        // Manejo de errores
+        console.error('Error al crear la tabla:', error);
+
+        // Responder con un JSON indicando el error
+        res.json({success: false, error: error.message});
+    }
+});
+
+app.post('/scrape', async (req, res) => {
+    const url = req.body.url; // Obtener la URL del cuerpo de la solicitud
+
+    try {
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.goto(url);
+
+        // Realiza las operaciones de scraping aquí
+        const data = await page.evaluate(() => {
+            // Función para obtener los datos del sitio web
+            return {
+                title: document.title,
+                content: document.body.innerText,
+            };
+        });
+
+        await browser.close();
+
+        // Insertar datos en la tabla scraping_ocr_dengue
+        const sql = `INSERT INTO scraping_ocr_dengue (origen, tipo, titulo, contenido, url) VALUES ('scraping', 'web', ?, ?, ?);`;
+        await db.query(sql, [data.title, data.content, url]);
+
+        res.json({success: true, message: 'Datos insertados correctamente'});
+    } catch (error) {
+        console.error('Error al realizar el scraping:', error);
+        res.status(500).json({success: false, error: 'Error al realizar el scraping'});
+    }
+});
+
+// Ruta para cargar archivos
+app.post('/upload', upload.single('file'), async (req, res) => {
+    try {
+        // Aquí puedes realizar cualquier procesamiento adicional necesario antes de guardar el archivo
+        res.json({success: true, message: 'Archivo cargado correctamente', filename: req.file.filename});
+    } catch (error) {
+        console.error('Error al cargar el archivo:', error);
+        res.status(500).json({success: false, error: 'Error al cargar el archivo'});
+    }
+});
+
+
+// Modified function using Tesseract.js
+app.post('/ocr', upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({success: false, error: 'No se proporcionó ningún archivo'});
+        }
+
+        // Create Tesseract worker
+        const worker = await createWorker({
+            // Optional worker configuration options
+        });
+
+        // Load language data
+        await worker.load();
+
+        // Perform OCR using Tesseract.js
+        const { data } = await worker.recognize(req.file.path, {
+            language: 'spa' // Specify Spanish language
+        });
+
+        // Extract text from the response
+        const text = data.text;
+
+        // Insert OCR text into database
+        const sql = `INSERT INTO scraping_ocr_dengue (origen, tipo, contenido, ruta_archivo) VALUES (?, ?, ?, ?);`;
+        await db.query(sql, ['tesseract', 'archivo', text, req.file.filename]);
+
+        // Release worker resources
+        await worker.terminate();
+
+        // Delete temporary file after OCR
+        fs.unlinkSync(req.file.path);
+
+        res.json({success: true, message: 'Texto extraído mediante Tesseract.js y almacenado en la base de datos'});
+    } catch (error) {
+        console.error('Error al realizar OCR:', error);
+        res.status(500).json({success: false, error: 'Error al realizar OCR'});
     }
 });

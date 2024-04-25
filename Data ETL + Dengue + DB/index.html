@@ -11,22 +11,46 @@
 <div class="logo-container">
     <img src="/img/LOGO-CENTRADO-BLANCO-retina-mobile.png" alt="Imagen del Dengue">
 </div>
-<div id="container">
-    <h1>Cargador Archivos Dengue</h1>
-    <form id="uploadForm">
-        <label class="file-upload">
-            <i class="fas fa-file-upload"></i> Seleccionar archivo Excel
-            <input type="file" name="excelfiles[]" id="excelfile" multiple>
-        </label>
-        <ul class="file-list"></ul>
-        <button type="button" id="upload-btn" disabled>Cargar archivos</button>
-        <div id="progress">
-            <div id="progress-bar">0%</div>
-        </div>
-    </form>
-    <p id="message"></p>
-    <button type="button" id="create-table-btn">Crear tabla "dengue"</button>
-    <p id="create-table-message"></p>
+<div class="container-wrapper">
+    <div id="container">
+        <h1>Cargador Archivos Dengue</h1>
+        <form id="uploadForm">
+            <label class="file-upload">
+                <i class="fas fa-file-upload"></i> Seleccionar archivo Excel
+                <input type="file" name="excelfiles[]" id="excelfile" multiple>
+            </label>
+            <ul class="file-list"></ul>
+            <button type="button" id="upload-btn" disabled>Cargar archivos</button>
+            <div id="progress">
+                <div id="progress-bar">0%</div>
+            </div>
+        </form>
+        <p id="message"></p>
+        <button type="button" id="create-table-btn">Crear tabla "dengue"</button>
+        <p id="create-table-message"></p>
+    </div>
+    <div id="container2">
+        <h1>Scraping</h1>
+        <form id="scrapeForm">
+            <label for="url">URL:</label>
+            <input type="text" id="url" name="url" required>
+            <button type="submit" style="background-color: #4CAF50; color: #fff;">Realizar Scraping</button>
+        </form>
+        <p id="scrape-message"></p>
+
+        <h1>Subir Archivos y Realizar OCR</h1>
+        <form id="ocrForm" enctype="multipart/form-data">
+            <label class="file-upload">
+                <i class="fas fa-file-upload"></i> Seleccionar archivo
+                <input type="file" id="ocrFileInput" name="ocrfile" required>
+            </label>
+            <button id="ocrButton" type="submit" style="background-color: #4CAF50; color: #fff;">Realizar OCR</button>
+        </form>
+        <ul id="fileList"></ul>
+        <p id="ocr-message"></p>
+        <button type="button" id="createScrapingOcrTableBtn">Crear tabla "scraping_ocr_dengue"</button>
+        <p id="create-scraping-ocr-table-message"></p>
+    </div>
 </div>
 <script src="script.js"></script>
 </body>

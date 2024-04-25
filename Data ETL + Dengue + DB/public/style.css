@@ -1,45 +1,11 @@
-
-body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    /* Establece la imagen de fondo */
-    background-image: url('img/mosq.jpg'); /* Reemplaza 'ruta/a/tu/imagen.jpg' con la ruta de tu imagen */
-    background-size: cover; /* Cubre todo el contenido del cuerpo */
-    background-position: center; /* Centra la imagen de fondo */
-    /* Aplica un desenfoque al fondo */
-}
-
-.logo-container {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-}
-
-.logo-container img {
-    width: 90px; /* Ajusta el valor según el tamaño deseado */
-    height: auto; /* Esto permite que la altura se ajuste automáticamente */
-}
-#container h1 {
-    color: white; /* Cambia el color del texto a blanco */
-}
-
-#container {
-    background: linear-gradient(10deg, rgba(33, 150, 243, 0.5), rgba(26, 35, 126, 0.5)); /* Gradiente de azul oscuro a azul aún más oscuro con transparencia */
-    padding: 100px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    max-width: 500px;
-    width: 100%;
-}
-
-h1 {
-    margin-top: 0;
-    color: #333;
+button[type="button"],
+button[type="submit"] { /* Include submit buttons in the rule */
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
 }
 
 input[type="file"] {
@@ -55,6 +21,81 @@ input[type="file"] {
     border-radius: 5px;
     margin-bottom: 20px;
 }
+
+body {
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    margin: 0;
+    background-image: url('img/mosq.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+.logo-container img {
+    width: 90px;
+    height: auto;
+}
+
+.container-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 120000px;
+    margin: 0 auto;
+}
+
+#container, #container2 {
+    background: linear-gradient(10deg, rgba(33, 150, 243, 0.5), rgba(26, 35, 126, 0.5));
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    max-width: 700px;
+    max-height: 800px; /* Altura máxima de los contenedores */
+    height: 100%; /* Los contenedores ocuparán la altura disponible */
+    width: 100%;
+    margin: 20px;
+    color: white;
+    overflow: auto; /* Agrega barras de desplazamiento si el contenido excede la altura */
+}
+
+#container form, #container2 form {
+    margin-bottom: 20px;
+}
+
+#container button, #container2 button {
+    margin-top: 10px;
+}
+
+#container h1, #container2 h1 {
+    margin-top: 0;
+}
+
+#container h1, #container2 h1 {
+    color: white; /* Cambia el color del texto a blanco */
+}
+
+h1 {
+    margin-top: 0;
+    color: #333;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+
 
 button[type="button"] {
     padding: 10px 20px;

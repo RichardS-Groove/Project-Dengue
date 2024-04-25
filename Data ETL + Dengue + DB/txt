@@ -1,2 +1,3 @@
 npm install
 npm server.js
+sudo apt-get install tesseract-ocr
