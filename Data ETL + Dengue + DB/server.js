@@ -209,7 +209,7 @@ const createScrapingOcrTableSql = `CREATE TABLE IF NOT EXISTS scraping_ocr_dengu
     origen VARCHAR(255) NOT NULL,
     tipo VARCHAR(50) NOT NULL,
     titulo VARCHAR(255),
-    contenido LONGBLOB,
+    contenido LONGTEXT,
     fecha_obtencion DATETIME DEFAULT CURRENT_TIMESTAMP,
     url VARCHAR(255),
     ruta_archivo VARCHAR(255)
