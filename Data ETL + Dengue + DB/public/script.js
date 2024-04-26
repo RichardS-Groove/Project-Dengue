@@ -34,7 +34,6 @@ scrapeForm.addEventListener('submit', async (event) => {
         urlInput.value = '';
         scrapeMessage.textContent = 'Scraping realizado con éxito';
 
-
     } catch (error) {
         scrapeMessage.textContent = 'Error de conexión al servidor';
     }
