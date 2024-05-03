@@ -163,22 +163,6 @@ app.post('/upload', uploadMultipleFiles, async (req, res) => {
     }
 });
 
-const startServer = () => {
-    db.connect((err) => {
-        if (err) {
-            console.error('Error al conectar a la base de datos:', err);
-            return;
-        }
-
-        console.log('Conexión a la base de datos establecida correctamente');
-
-        app.listen(3000, () => {
-            console.log('Servidor iniciado en el puerto 3000');
-        });
-    });
-};
-
-startServer();
 
 
 // Ruta para obtener todos los datos de la tabla "dengue"
@@ -319,3 +303,32 @@ app.post('/ocr', upload.single('image'), async (req, res) => {
         res.status(500).json({success: false, error: 'Error al realizar OCR'});
     }
 });
+
+const reconnectInterval = 5000; // Intervalo de 5 segundos para reintentar la conexión
+
+const startServer = () => {
+    db.connect((err) => {
+        if (err) {
+            console.error('Error al conectar a la base de datos:', err);
+
+            // Si el error es "Packets out of order", reintentar la conexión después de un intervalo
+            if (err.code === 'PROTOCOL_PACKETS_OUT_OF_ORDER') {
+                console.log('Reintentando conexión en', reconnectInterval / 1000, 'segundos...');
+                setTimeout(startServer, reconnectInterval);
+            } else {
+                // Manejar otros errores según sea necesario
+                console.error('Error desconocido:', err);
+            }
+        } else {
+            console.log('Conexión a la base de datos establecida correctamente');
+
+            // Iniciar el servidor web una vez que la conexión a la base de datos se haya establecido
+            app.listen(3000, () => {
+                console.log('Servidor iniciado en el puerto 3000');
+            });
+        }
+    });
+};
+
+// Intenta conectarse a la base de datos por primera vez
+startServer();
