@@ -4,7 +4,7 @@ const mysql = require('mysql');
 const fs = require('fs');
 const xlsx = require('xlsx');
 const puppeteer = require('puppeteer');
-const { createWorker } = require('tesseract.js');
+const {createWorker} = require('tesseract.js');
 
 const worker = createWorker();  // Create the worker object
 
@@ -50,6 +50,7 @@ app.get('/', (req, res) => {
 // Define la consulta SQL para crear la tabla "dengue"
 const createTableSql = `CREATE TABLE IF NOT EXISTS dengue (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    pais_nombre VARCHAR(255),
     provincia_nombre VARCHAR(255),
     departamento_nombre VARCHAR(255),
     ano_inicio VARCHAR(255),
@@ -107,6 +108,7 @@ app.post('/upload', uploadMultipleFiles, async (req, res) => {
                 for (const record of records) {
                     console.log('Registro a insertar:', record);
                     const data = {
+                        pais_nombre: record['pais_nombre'],
                         provincia_nombre: record['provincia_nombre'],
                         departamento_nombre: record['departamento_nombre'],
                         ano_inicio: record['ano_inicio'],
@@ -124,10 +126,11 @@ app.post('/upload', uploadMultipleFiles, async (req, res) => {
 
                     console.log('Insertando registro:', data);
 
-                    const sql = `INSERT INTO dengue (provincia_nombre, departamento_nombre, ano_inicio, ano_fin, semanas_epidemiologicas, evento_nombre, grupo_edad_desc, cantidad_casos, tasa_de_Incidencia, Confirmados_Laboratorio, Muertes, Letalidad, Poblacion_X_1000)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+                    const sql = `INSERT INTO dengue (pais_nombre, provincia_nombre, departamento_nombre, ano_inicio, ano_fin, semanas_epidemiologicas, evento_nombre, grupo_edad_desc, cantidad_casos, tasa_de_Incidencia, Confirmados_Laboratorio, Muertes, Letalidad, Poblacion_X_1000)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
                     await db.query(sql, [
+                        data.pais_nombre,
                         data.provincia_nombre,
                         data.departamento_nombre,
                         data.ano_inicio,
@@ -293,7 +296,7 @@ app.post('/ocr', upload.single('image'), async (req, res) => {
         await worker.load();
 
         // Perform OCR using Tesseract.js
-        const { data } = await worker.recognize(req.file.path, {
+        const {data} = await worker.recognize(req.file.path, {
             language: 'spa' // Specify Spanish language
         });
 
