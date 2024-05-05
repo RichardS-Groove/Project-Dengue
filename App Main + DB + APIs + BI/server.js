@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const PORT = 3000;
 const mysql = require('mysql');
 const fs = require('fs');
 const xlsx = require('xlsx');
@@ -164,7 +165,6 @@ app.post('/upload', uploadMultipleFiles, async (req, res) => {
 });
 
 
-
 // Ruta para obtener todos los datos de la tabla "dengue"
 app.get('/epidemia/dengue', async (req, res) => {
     try {
@@ -323,8 +323,8 @@ const startServer = () => {
             console.log('Conexión a la base de datos establecida correctamente');
 
             // Iniciar el servidor web una vez que la conexión a la base de datos se haya establecido
-            app.listen(3000, () => {
-                console.log('Servidor iniciado en el puerto 3000');
+            app.listen(PORT, () => {
+                console.log('Servidor iniciado en el puerto:', PORT);
             });
         }
     });
