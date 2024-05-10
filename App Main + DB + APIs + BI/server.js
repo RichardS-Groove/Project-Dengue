@@ -190,6 +190,30 @@ app.get('/epidemia/dengue', async (req, res) => {
     }
 });
 
+app.get('/epidemia/scraping_ocr_dengue', async (req, res) => {
+    try {
+        // Consulta SQL para seleccionar todos los registros de la tabla "dengue"
+        const sql = 'SELECT * FROM scraping_ocr_dengue';
+
+        // Ejecuta la consulta SQL
+        db.query(sql, (error, results, fields) => {
+            if (error) {
+                console.error('Error al obtener los datos de la tabla "scraping_ocr_dengue":', error);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Error al obtener los datos de la tabla "scraping_ocr_dengue"'
+                });
+            }
+
+            // Envía los resultados como respuesta en formato JSON
+            res.json({success: true, data: results});
+        });
+    } catch (error) {
+        console.error('Error al obtener los datos de la tabla "scraping_ocr_dengue":', error);
+        res.status(500).json({success: false, error: 'Error al obtener los datos de la tabla "scraping_ocr_dengue"'});
+    }
+});
+
 // Define la consulta SQL para crear la tabla "scraping_ocr_dengue"
 const createScrapingOcrTableSql = `CREATE TABLE IF NOT EXISTS scraping_ocr_dengue (
     id INT AUTO_INCREMENT PRIMARY KEY,
