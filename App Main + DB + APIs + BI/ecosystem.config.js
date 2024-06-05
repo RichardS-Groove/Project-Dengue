@@ -1,6 +1,6 @@
 module.exports = {
     apps: [{
-        name: "app-edesur",
+        name: "app-UNLZ",
         script: "./server.js",
         watch: false, // Se refresca automaticamente con los nuevos cambios
         max_memory_restart: '4G', // Reiniciar si se excede 4GB de memoria
