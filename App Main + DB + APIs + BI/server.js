@@ -14,7 +14,7 @@ app.use(express.static('public'));
 
 // Configuración de la conexión a MySQL
 const db = mysql.createConnection({
-    host: 'localhost',
+    host: 'Dae',
     port: 3306,
     user: 'root',
     password: 'Cambio2024',
