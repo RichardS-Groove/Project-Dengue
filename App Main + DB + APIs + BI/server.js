@@ -6,8 +6,10 @@ const fs = require('fs');
 const xlsx = require('xlsx');
 const puppeteer = require('puppeteer');
 const {createWorker} = require('tesseract.js');
-
 const worker = createWorker();  // Create the worker object
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const bodyParser = require('body-parser');
+require('dotenv').config(); // Carga las variables de entorno desde el archivo .env
 
 // Configuración para servir archivos estáticos desde la carpeta 'public'
 app.use(express.static('public'));
@@ -29,6 +31,10 @@ const upload = multer({
     limits: {fileSize: 10 * 1024 * 1024}, // Límite de tamaño de archivo (en bytes), aquí 10 MB
 });
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
 const uploadMultipleFiles = upload.array('excelfiles', 10); // Agrega esta línea
 
 // Permitir solicitudes desde cualquier origen (CORS)
@@ -45,6 +51,11 @@ app.use(express.urlencoded({extended: true}));
 // Ruta para la página principal
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
+});
+
+// Ruta para la página Chatbot
+app.get('/Chat', (req, res) => {
+    res.sendFile(__dirname + '/chatbot.html');
 });
 
 
@@ -359,3 +370,82 @@ const startServer = () => {
 
 // Intenta conectarse a la base de datos por primera vez
 startServer();
+
+
+
+// Todo sobre el ChatBot
+
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+
+// Chatbot con Gemini y extracción de datos de SQL Server
+app.post('/chat', async (req, res) => {
+    try {
+        const prompt = req.body.prompt;
+
+        // 1. Extraer información relevante de SQL Server
+        let dbData = [];
+        try {
+            // Verifica la conexión antes de realizar la consulta
+            if (db.connected) {
+                dbData = await extractRelevantData(prompt);
+            } else {
+                console.error('No se puede consultar la base de datos. No hay conexión.');
+            }
+        } catch (dbError) {
+            console.error('Error al consultar la base de datos:', dbError);
+        }
+
+        // 2. Formatear la información para Gemini (solo si hay datos relevantes)
+        let formattedData = "No encontré información relevante en la base de datos.";
+        if (dbData.length > 0) {
+            formattedData = formatDataForGemini(dbData);
+        }
+
+        // 3. Incorporar la información en el prompt
+        const enhancedPrompt = `${prompt}\nInformación relevante de la base de datos:\n${formattedData}`;
+
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const result = await model.generateContent(enhancedPrompt);
+
+        if (result && result.response) {
+            res.json({ output: result.response.text() });
+        } else {
+            res.status(500).json({ error: 'Error al generar respuesta de Gemini' });
+        }
+    } catch (error) {
+        console.error('Error en el servidor (chat):', error);
+        res.status(500).json({ error: 'Error en el servidor' });
+    }
+});
+
+// Funciones auxiliares (adaptadas para SQL Server)
+async function extractRelevantData(prompt) {
+    try {
+        // Intenta extraer el número de ticket del prompt
+        const ticketNumberMatch = prompt.match(/INC\d+/);
+        const ticketNumber = ticketNumberMatch ? ticketNumberMatch[0] : null;
+
+        if (ticketNumber) {
+            const result = await db.request()
+                .input('ticketNumber', sql.NVarChar, ticketNumber)
+                .query(`
+                    SELECT TOP 1 [Número_], Estado 
+                    FROM ticket 
+                    WHERE [Número_] = @ticketNumber
+                `); // Busca solo el número de ticket y el estado
+
+            return result.recordset;
+        } else {
+            return []; // Si no se encuentra un número de ticket válido, devuelve un array vacío
+        }
+    } catch (error) {
+        console.error('Error al consultar SQL Server:', error);
+        return [];
+    }
+}
+
+function formatDataForGemini(dbData) {
+    return dbData.map(row => {
+        return `Número de ticket: ${row['Número_']}, Estado: ${row['Estado']}`; // Solo incluimos número y estado
+    }).join('\n');
+}

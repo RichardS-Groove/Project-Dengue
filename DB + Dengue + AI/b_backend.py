@@ -11,7 +11,7 @@ os.environ["OPENAI_API_KEY"] = a_env_vars.OPENAI_API_KEY
 # 3. Crear el LLM
 from langchain.chat_models import ChatOpenAI
 # Modificar la URL de OpenAI a la URL del servidor local
-llm = ChatOpenAI(temperature=0,model_name='gpt-3.5-turbo')
+llm = ChatOpenAI(temperature=0,model_name='gemini-1.5-flash')
 
 
 # 4. **Importar SQLDatabaseChain desde el paquete correcto**
