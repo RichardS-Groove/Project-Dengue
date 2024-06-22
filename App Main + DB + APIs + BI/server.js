@@ -10,6 +10,8 @@ const worker = createWorker();  // Create the worker object
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const bodyParser = require('body-parser');
 require('dotenv').config(); // Carga las variables de entorno desde el archivo .env
+const natural = require('natural');
+const tokenizer = new natural.WordTokenizer();
 
 // Configuración para servir archivos estáticos desde la carpeta 'public'
 app.use(express.static('public'));
@@ -376,14 +378,33 @@ startServer();
 // Todo sobre el ChatBot
 
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+// Cache para almacenar respuestas a consultas frecuentes
+const queryCache = new Map();
+
+// Almacén de contexto de conversación
+const conversationContext = new Map();
+
+app.use(express.json());
 
 
 // Chatbot con Gemini y extracción de datos de MySQL
 app.post('/chat', async (req, res) => {
     try {
-        const prompt = req.body.prompt;
+        const { prompt, userId } = req.body;
 
-        // 1. Extraer información relevante de MySQL
+        // Obtener o inicializar el contexto de la conversación
+        let context = conversationContext.get(userId) || [];
+        context.push({ role: 'user', content: prompt });
+
+        // Verificar si la consulta está en caché
+        const cachedResponse = queryCache.get(prompt);
+        if (cachedResponse) {
+            context.push({ role: 'assistant', content: cachedResponse });
+            conversationContext.set(userId, context.slice(-5)); // Mantener solo las últimas 5 interacciones
+            return res.json({ output: cachedResponse });
+        }
+
+        // Extraer información relevante de MySQL
         let dbData = [];
         try {
             dbData = await extractRelevantData(prompt);
@@ -391,20 +412,36 @@ app.post('/chat', async (req, res) => {
             console.error('Error al consultar la base de datos:', dbError);
         }
 
-        // 2. Formatear la información para Gemini (solo si hay datos relevantes)
-        let formattedData = "No encontré información relevante en la base de datos.";
-        if (dbData.length > 0) {
-            formattedData = formatDataForGemini(dbData);
-        }
+        // Analizar el sentimiento del prompt
+        const sentiment = analyzeSentiment(prompt);
 
-        // 3. Incorporar la información en el prompt
-        const enhancedPrompt = `${prompt}\nInformación relevante de la base de datos:\n${formattedData}`;
+        // Formatear la información para Gemini
+        let formattedData = formatDataForGemini(dbData);
+
+        // Crear un prompt mejorado con contexto y sentimiento
+        const enhancedPrompt = `
+            Contexto de la conversación: ${context.map(c => `${c.role}: ${c.content}`).join('\n')}
+            Sentimiento del usuario: ${sentiment}
+            Información relevante de la base de datos: ${formattedData}
+            Pregunta del usuario: ${prompt}
+            Por favor, responde a la pregunta del usuario teniendo en cuenta el contexto de la conversación, 
+            el sentimiento detectado y la información de la base de datos.
+        `;
 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent(enhancedPrompt);
 
         if (result && result.response) {
-            res.json({ output: result.response.text() });
+            const response = result.response.text();
+
+            // Actualizar el contexto de la conversación
+            context.push({ role: 'assistant', content: response });
+            conversationContext.set(userId, context.slice(-5)); // Mantener solo las últimas 5 interacciones
+
+            // Cachear la respuesta para futuras consultas similares
+            queryCache.set(prompt, response);
+
+            res.json({ output: response });
         } else {
             res.status(500).json({ error: 'Error al generar respuesta de Gemini' });
         }
@@ -414,45 +451,29 @@ app.post('/chat', async (req, res) => {
     }
 });
 
-// Funciones auxiliares (adaptadas para MySQL y la tabla dengue)
 async function extractRelevantData(prompt) {
     return new Promise((resolve, reject) => {
-        try {
-            // Extraer información relevante del prompt
-            const pais = extractInfoFromPrompt(prompt, 'país');
-            const provincia = extractInfoFromPrompt(prompt, 'provincia');
-            const ano = extractInfoFromPrompt(prompt, 'año');
+        // Extraer palabras clave del prompt
+        const keywords = extractKeywords(prompt);
 
-            let query = 'SELECT * FROM dengue WHERE 1=1';
-            let params = [];
+        let query = 'SELECT * FROM dengue WHERE 1=1';
+        let params = [];
 
-            if (pais) {
-                query += ' AND pais_nombre = ?';
-                params.push(pais);
+        keywords.forEach(keyword => {
+            query += ` AND (pais_nombre LIKE ? OR provincia_nombre LIKE ? OR evento_nombre LIKE ?)`;
+            params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
+        });
+
+        query += ' LIMIT 5';
+
+        db.query(query, params, (error, results) => {
+            if (error) {
+                console.error('Error al consultar MySQL:', error);
+                reject(error);
+            } else {
+                resolve(results);
             }
-            if (provincia) {
-                query += ' AND provincia_nombre = ?';
-                params.push(provincia);
-            }
-            if (ano) {
-                query += ' AND (ano_inicio = ? OR ano_fin = ?)';
-                params.push(ano, ano);
-            }
-
-            query += ' LIMIT 5'; // Limitar a 5 resultados para no sobrecargar la respuesta
-
-            db.query(query, params, (error, results) => {
-                if (error) {
-                    console.error('Error al consultar MySQL:', error);
-                    reject(error);
-                } else {
-                    resolve(results);
-                }
-            });
-        } catch (error) {
-            console.error('Error en extractRelevantData:', error);
-            reject(error);
-        }
+        });
     });
 }
 
@@ -462,8 +483,15 @@ function formatDataForGemini(dbData) {
     }).join('\n');
 }
 
-function extractInfoFromPrompt(prompt, infoType) {
-    const regex = new RegExp(`${infoType}\\s+([\\w\\s]+)`, 'i');
-    const match = prompt.match(regex);
-    return match ? match[1].trim() : null;
+function analyzeSentiment(text) {
+    const analyzer = new natural.SentimentAnalyzer('Spanish', natural.PorterStemmerEs, 'afinn');
+    const tokens = tokenizer.tokenize(text);
+    const sentiment = analyzer.getSentiment(tokens);
+    return sentiment > 0 ? 'positivo' : sentiment < 0 ? 'negativo' : 'neutral';
+}
+
+function extractKeywords(text) {
+    const tokens = tokenizer.tokenize(text);
+    const stopwords = ['el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas', 'y', 'o', 'pero', 'si', 'no', 'en', 'por', 'para'];
+    return tokens.filter(token => !stopwords.includes(token.toLowerCase()));
 }
