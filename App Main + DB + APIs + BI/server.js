@@ -377,20 +377,16 @@ startServer();
 
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 
-// Chatbot con Gemini y extracción de datos de SQL Server
+
+// Chatbot con Gemini y extracción de datos de MySQL
 app.post('/chat', async (req, res) => {
     try {
         const prompt = req.body.prompt;
 
-        // 1. Extraer información relevante de SQL Server
+        // 1. Extraer información relevante de MySQL
         let dbData = [];
         try {
-            // Verifica la conexión antes de realizar la consulta
-            if (db.connected) {
-                dbData = await extractRelevantData(prompt);
-            } else {
-                console.error('No se puede consultar la base de datos. No hay conexión.');
-            }
+            dbData = await extractRelevantData(prompt);
         } catch (dbError) {
             console.error('Error al consultar la base de datos:', dbError);
         }
@@ -418,34 +414,56 @@ app.post('/chat', async (req, res) => {
     }
 });
 
-// Funciones auxiliares (adaptadas para SQL Server)
+// Funciones auxiliares (adaptadas para MySQL y la tabla dengue)
 async function extractRelevantData(prompt) {
-    try {
-        // Intenta extraer el número de ticket del prompt
-        const ticketNumberMatch = prompt.match(/INC\d+/);
-        const ticketNumber = ticketNumberMatch ? ticketNumberMatch[0] : null;
+    return new Promise((resolve, reject) => {
+        try {
+            // Extraer información relevante del prompt
+            const pais = extractInfoFromPrompt(prompt, 'país');
+            const provincia = extractInfoFromPrompt(prompt, 'provincia');
+            const ano = extractInfoFromPrompt(prompt, 'año');
 
-        if (ticketNumber) {
-            const result = await db.request()
-                .input('ticketNumber', sql.NVarChar, ticketNumber)
-                .query(`
-                    SELECT TOP 1 [Número_], Estado 
-                    FROM ticket 
-                    WHERE [Número_] = @ticketNumber
-                `); // Busca solo el número de ticket y el estado
+            let query = 'SELECT * FROM dengue WHERE 1=1';
+            let params = [];
 
-            return result.recordset;
-        } else {
-            return []; // Si no se encuentra un número de ticket válido, devuelve un array vacío
+            if (pais) {
+                query += ' AND pais_nombre = ?';
+                params.push(pais);
+            }
+            if (provincia) {
+                query += ' AND provincia_nombre = ?';
+                params.push(provincia);
+            }
+            if (ano) {
+                query += ' AND (ano_inicio = ? OR ano_fin = ?)';
+                params.push(ano, ano);
+            }
+
+            query += ' LIMIT 5'; // Limitar a 5 resultados para no sobrecargar la respuesta
+
+            db.query(query, params, (error, results) => {
+                if (error) {
+                    console.error('Error al consultar MySQL:', error);
+                    reject(error);
+                } else {
+                    resolve(results);
+                }
+            });
+        } catch (error) {
+            console.error('Error en extractRelevantData:', error);
+            reject(error);
         }
-    } catch (error) {
-        console.error('Error al consultar SQL Server:', error);
-        return [];
-    }
+    });
 }
 
 function formatDataForGemini(dbData) {
     return dbData.map(row => {
-        return `Número de ticket: ${row['Número_']}, Estado: ${row['Estado']}`; // Solo incluimos número y estado
+        return `País: ${row.pais_nombre}, Provincia: ${row.provincia_nombre}, Año: ${row.ano_inicio}-${row.ano_fin}, Casos: ${row.cantidad_casos}, Muertes: ${row.Muertes}`;
     }).join('\n');
+}
+
+function extractInfoFromPrompt(prompt, infoType) {
+    const regex = new RegExp(`${infoType}\\s+([\\w\\s]+)`, 'i');
+    const match = prompt.match(regex);
+    return match ? match[1].trim() : null;
 }
