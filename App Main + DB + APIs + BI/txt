@@ -7,6 +7,8 @@ npm install touch-cli -g
 MySQL:
 max_allowed_packet=512M
 
+Crea .env
+API_KEY=''
 
 PM2:
 pm2 start server.js
