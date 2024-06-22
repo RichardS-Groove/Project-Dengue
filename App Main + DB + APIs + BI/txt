@@ -9,11 +9,12 @@ max_allowed_packet=512M
 
 
 PM2:
-
 pm2 start server.js
-
 $ pm2 plus:
-
 pm2 start ecosystem.config.js
-
 pm2 logs
+
+ChatBOT:
+
+Cuanto países tenemos?
+los nombres de los paises

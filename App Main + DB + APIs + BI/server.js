@@ -7,7 +7,7 @@ const xlsx = require('xlsx');
 const puppeteer = require('puppeteer');
 const {createWorker} = require('tesseract.js');
 const worker = createWorker();  // Create the worker object
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const {GoogleGenerativeAI} = require("@google/generative-ai");
 const bodyParser = require('body-parser');
 require('dotenv').config(); // Carga las variables de entorno desde el archivo .env
 const natural = require('natural');
@@ -34,7 +34,7 @@ const upload = multer({
 });
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
 const uploadMultipleFiles = upload.array('excelfiles', 10); // Agrega esta línea
@@ -374,7 +374,6 @@ const startServer = () => {
 startServer();
 
 
-
 // Todo sobre el ChatBot
 
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
@@ -390,18 +389,18 @@ app.use(express.json());
 // Chatbot con Gemini y extracción de datos de MySQL
 app.post('/chat', async (req, res) => {
     try {
-        const { prompt, userId } = req.body;
+        const {prompt, userId} = req.body;
 
         // Obtener o inicializar el contexto de la conversación
         let context = conversationContext.get(userId) || [];
-        context.push({ role: 'user', content: prompt });
+        context.push({role: 'user', content: prompt});
 
         // Verificar si la consulta está en caché
         const cachedResponse = queryCache.get(prompt);
         if (cachedResponse) {
-            context.push({ role: 'assistant', content: cachedResponse });
+            context.push({role: 'assistant', content: cachedResponse});
             conversationContext.set(userId, context.slice(-5)); // Mantener solo las últimas 5 interacciones
-            return res.json({ output: cachedResponse });
+            return res.json({output: cachedResponse});
         }
 
         // Extraer información relevante de MySQL
@@ -420,15 +419,16 @@ app.post('/chat', async (req, res) => {
 
         // Crear un prompt mejorado con contexto y sentimiento
         const enhancedPrompt = `
-            Contexto de la conversación: ${context.map(c => `${c.role}: ${c.content}`).join('\n')}
-            Sentimiento del usuario: ${sentiment}
-            Información relevante de la base de datos: ${formattedData}
-            Pregunta del usuario: ${prompt}
-            Por favor, responde a la pregunta del usuario teniendo en cuenta el contexto de la conversación, 
-            el sentimiento detectado y la información de la base de datos.
-        `;
+    Contexto de la conversación: ${context.map(c => `${c.role}: ${c.content}`).join('\n')}
+    Sentimiento del usuario: ${sentiment}
+    Información relevante de la base de datos: ${formattedData}
+    Pregunta del usuario: ${prompt}
+    Por favor, responde a la pregunta del usuario utilizando la información de la base de datos proporcionada. 
+    Si se te proporciona una lista de países, menciona explícitamente que estos son los países en la base de datos. 
+    Si no hay información relevante, indícalo claramente en tu respuesta.
+`;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
         const result = await model.generateContent(enhancedPrompt);
 
         if (result && result.response) {
@@ -441,19 +441,19 @@ app.post('/chat', async (req, res) => {
             }
 
             // Actualizar el contexto de la conversación
-            context.push({ role: 'assistant', content: response });
+            context.push({role: 'assistant', content: response});
             conversationContext.set(userId, context.slice(-5)); // Mantener solo las últimas 5 interacciones
 
             // Cachear la respuesta para futuras consultas similares
             queryCache.set(prompt, response);
 
-            res.json({ output: response });
+            res.json({output: response});
         } else {
-            res.status(500).json({ error: 'Error al generar respuesta de Gemini' });
+            res.status(500).json({error: 'Error al generar respuesta de Gemini'});
         }
     } catch (error) {
         console.error('Error en el servidor (chat):', error);
-        res.status(500).json({ error: 'Error en el servidor' });
+        res.status(500).json({error: 'Error en el servidor'});
     }
 });
 
@@ -461,6 +461,8 @@ async function extractRelevantData(prompt) {
     return new Promise((resolve, reject) => {
         if (prompt.toLowerCase().includes('cuantos paises') || prompt.toLowerCase().includes('cuántos países')) {
             countCountries().then(resolve).catch(reject);
+        } else if (prompt.toLowerCase().includes('nombres de los paises') || prompt.toLowerCase().includes('qué países')) {
+            getCountryNames().then(resolve).catch(reject);
         } else {
             // Extraer palabras clave del prompt
             const keywords = extractKeywords(prompt);
@@ -486,6 +488,7 @@ async function extractRelevantData(prompt) {
         }
     });
 }
+
 function countCountries() {
     return new Promise((resolve, reject) => {
         const query = 'SELECT COUNT(DISTINCT pais_nombre) AS total_paises FROM dengue';
@@ -504,8 +507,11 @@ function formatDataForGemini(dbData) {
     if (typeof dbData === 'number') {
         return `Total número de países: ${dbData}`;
     }
-    if (!Array.isArray(dbData)) {
-        return 'No se encontraron datos relevantes.';
+    if (Array.isArray(dbData) && dbData.length > 0 && typeof dbData[0] === 'string') {
+        return `Países en la base de datos: ${dbData.join(', ')}`;
+    }
+    if (!Array.isArray(dbData) || dbData.length === 0) {
+        return 'No se encontraron datos relevantes en la base de datos.';
     }
     return dbData.map(row => {
         return `País: ${row.pais_nombre}, Provincia: ${row.provincia_nombre}, Año: ${row.ano_inicio}-${row.ano_fin}, Casos: ${row.cantidad_casos}, Muertes: ${row.Muertes}`;
@@ -523,4 +529,18 @@ function extractKeywords(text) {
     const tokens = tokenizer.tokenize(text);
     const stopwords = ['el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas', 'y', 'o', 'pero', 'si', 'no', 'en', 'por', 'para'];
     return tokens.filter(token => !stopwords.includes(token.toLowerCase()));
+}
+
+function getCountryNames() {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT DISTINCT pais_nombre FROM dengue ORDER BY pais_nombre';
+        db.query(query, (error, results) => {
+            if (error) {
+                console.error('Error al obtener nombres de países:', error);
+                reject(error);
+            } else {
+                resolve(results.map(row => row.pais_nombre));
+            }
+        });
+    });
 }
