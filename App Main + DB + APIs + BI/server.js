@@ -64,7 +64,8 @@ const createTableSql = `CREATE TABLE IF NOT EXISTS dengue (
     Confirmados_Laboratorio VARCHAR(255),
     Muertes VARCHAR(255),
     Letalidad VARCHAR(255),
-    Poblacion_X_1000 VARCHAR(255)
+    Poblacion_X_1000 VARCHAR(255),
+    vacunacion VARCHAR(255) 
 );`;
 
 // Manejador de la solicitud para crear la tabla "dengue"
@@ -122,13 +123,14 @@ app.post('/upload', uploadMultipleFiles, async (req, res) => {
                         Confirmados_Laboratorio: record['Confirmados_Laboratorio'],
                         Muertes: record['Muertes'],
                         Letalidad: record['Letalidad'],
-                        Poblacion_X_1000: record['Poblacion_X_1000']
+                        Poblacion_X_1000: record['Poblacion_X_1000'],
+                        vacunacion: record['vacunacion']
                     };
 
                     console.log('Insertando registro:', data);
 
-                    const sql = `INSERT INTO dengue (pais_nombre, provincia_nombre, departamento_nombre, ano_inicio, ano_fin, semanas_epidemiologicas, evento_nombre, grupo_edad_desc, cantidad_casos, tasa_de_Incidencia, Confirmados_Laboratorio, Muertes, Letalidad, Poblacion_X_1000)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+                    const sql = `INSERT INTO dengue (pais_nombre, provincia_nombre, departamento_nombre, ano_inicio, ano_fin, semanas_epidemiologicas, evento_nombre, grupo_edad_desc, cantidad_casos, tasa_de_Incidencia, Confirmados_Laboratorio, Muertes, Letalidad, Poblacion_X_1000, vacunacion)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 
                     await db.query(sql, [
                         data.pais_nombre,
@@ -144,7 +146,8 @@ app.post('/upload', uploadMultipleFiles, async (req, res) => {
                         data.Confirmados_Laboratorio,
                         data.Muertes,
                         data.Letalidad,
-                        data.Poblacion_X_1000
+                        data.Poblacion_X_1000,
+                        data.vacunacion
                     ]);
                 }
                 console.log('Todos los registros insertados correctamente');
