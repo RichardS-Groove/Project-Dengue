@@ -432,7 +432,13 @@ app.post('/chat', async (req, res) => {
         const result = await model.generateContent(enhancedPrompt);
 
         if (result && result.response) {
-            const response = result.response.text();
+            let response = result.response.text();
+
+            // Si la pregunta era sobre el número de países, añadir la información al inicio de la respuesta
+            if (prompt.toLowerCase().includes('cuantos paises') || prompt.toLowerCase().includes('cuántos países')) {
+                const totalPaises = await countCountries();
+                response = `En la base de datos hay un total de ${totalPaises} países. ` + response;
+            }
 
             // Actualizar el contexto de la conversación
             context.push({ role: 'assistant', content: response });
@@ -453,31 +459,54 @@ app.post('/chat', async (req, res) => {
 
 async function extractRelevantData(prompt) {
     return new Promise((resolve, reject) => {
-        // Extraer palabras clave del prompt
-        const keywords = extractKeywords(prompt);
+        if (prompt.toLowerCase().includes('cuantos paises') || prompt.toLowerCase().includes('cuántos países')) {
+            countCountries().then(resolve).catch(reject);
+        } else {
+            // Extraer palabras clave del prompt
+            const keywords = extractKeywords(prompt);
 
-        let query = 'SELECT * FROM dengue WHERE 1=1';
-        let params = [];
+            let query = 'SELECT * FROM dengue WHERE 1=1';
+            let params = [];
 
-        keywords.forEach(keyword => {
-            query += ` AND (pais_nombre LIKE ? OR provincia_nombre LIKE ? OR evento_nombre LIKE ?)`;
-            params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
-        });
+            keywords.forEach(keyword => {
+                query += ` AND (pais_nombre LIKE ? OR provincia_nombre LIKE ? OR evento_nombre LIKE ?)`;
+                params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
+            });
 
-        query += ' LIMIT 5';
+            query += ' LIMIT 5';
 
-        db.query(query, params, (error, results) => {
+            db.query(query, params, (error, results) => {
+                if (error) {
+                    console.error('Error al consultar MySQL:', error);
+                    reject(error);
+                } else {
+                    resolve(results);
+                }
+            });
+        }
+    });
+}
+function countCountries() {
+    return new Promise((resolve, reject) => {
+        const query = 'SELECT COUNT(DISTINCT pais_nombre) AS total_paises FROM dengue';
+        db.query(query, (error, results) => {
             if (error) {
-                console.error('Error al consultar MySQL:', error);
+                console.error('Error al contar países:', error);
                 reject(error);
             } else {
-                resolve(results);
+                resolve(results[0].total_paises);
             }
         });
     });
 }
 
 function formatDataForGemini(dbData) {
+    if (typeof dbData === 'number') {
+        return `Total número de países: ${dbData}`;
+    }
+    if (!Array.isArray(dbData)) {
+        return 'No se encontraron datos relevantes.';
+    }
     return dbData.map(row => {
         return `País: ${row.pais_nombre}, Provincia: ${row.provincia_nombre}, Año: ${row.ano_inicio}-${row.ano_fin}, Casos: ${row.cantidad_casos}, Muertes: ${row.Muertes}`;
     }).join('\n');
