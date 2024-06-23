@@ -16,7 +16,11 @@ $ pm2 plus:
 pm2 start ecosystem.config.js
 pm2 logs
 
-ChatBOT:
-
+ChatBOT: País: ${row.pais_nombre}, Provincia: ${row.provincia_nombre}, Año: ${row.ano_inicio}-${row.ano_fin},
+Hola?
 Cuanto países tenemos?
-los nombres de los paises
+los nombres de los paises || Dame los nombres de los países?
+Bolivia
+Peru
+Tucumán
+
