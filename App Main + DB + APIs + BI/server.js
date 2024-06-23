@@ -385,71 +385,80 @@ app.use(express.json());
 // Chatbot con Gemini y extracción de datos de MySQL
 app.post('/chat', async (req, res) => {
     try {
-        const {prompt, userId} = req.body;
+        const { prompt, userId } = req.body;
 
         // Obtener o inicializar el contexto de la conversación
         let context = conversationContext.get(userId) || [];
-        context.push({role: 'user', content: prompt});
+        context.push({ role: 'user', content: prompt });
 
         // Verificar si la consulta está en caché
         const cachedResponse = queryCache.get(prompt);
         if (cachedResponse) {
-            context.push({role: 'assistant', content: cachedResponse});
-            conversationContext.set(userId, context.slice(-5)); // Mantener solo las últimas 5 interacciones
-            return res.json({output: cachedResponse});
+            context.push({ role: 'assistant', content: cachedResponse });
+            conversationContext.set(userId, context.slice(-5));
+            return res.json({ output: cachedResponse });
         }
 
-        // Extraer información relevante de MySQL
-        let dbData = [];
-        try {
-            dbData = await extractRelevantData(prompt);
-        } catch (dbError) {
-            console.error('Error al consultar la base de datos:', dbError);
-        }
+        let response = '';
 
-        // Analizar el sentimiento del prompt
-        const sentiment = analyzeSentiment(prompt);
-
-        // Formatear la información para Gemini
-        let formattedData = formatDataForGemini(dbData);
-
-        // Crear un prompt mejorado con contexto y sentimiento
-        const enhancedPrompt = `
-    Contexto de la conversación: ${context.map(c => `${c.role}: ${c.content}`).join('\n')}
-    Sentimiento del usuario: ${sentiment}
-    Información relevante de la base de datos: ${formattedData}
-    Pregunta del usuario: ${prompt}
-    Por favor, responde a la pregunta del usuario utilizando la información de la base de datos proporcionada. 
-    Si se te proporciona una lista de países, menciona explícitamente que estos son los países en la base de datos. 
-    Si no hay información relevante, indícalo claramente en tu respuesta.
-`;
-
-        const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
-        const result = await model.generateContent(enhancedPrompt);
-
-        if (result && result.response) {
-            let response = result.response.text();
-
-            // Si la pregunta era sobre el número de países, añadir la información al inicio de la respuesta
-            if (prompt.toLowerCase().includes('cuantos paises') || prompt.toLowerCase().includes('cuántos países')) {
-                const totalPaises = await countCountries();
-                response = `En la base de datos hay un total de ${totalPaises} países. ` + response;
-            }
-
-            // Actualizar el contexto de la conversación
-            context.push({role: 'assistant', content: response});
-            conversationContext.set(userId, context.slice(-5)); // Mantener solo las últimas 5 interacciones
-
-            // Cachear la respuesta para futuras consultas similares
-            queryCache.set(prompt, response);
-
-            res.json({output: response});
+        // Manejo de preguntas específicas
+        if (prompt.toLowerCase().includes('cuántos países') || prompt.toLowerCase().includes('cuantos paises')) {
+            const totalPaises = await countCountries();
+            response = `En la base de datos hay un total de ${totalPaises} países.`;
+        } else if (prompt.toLowerCase().includes('nombres de los países') || prompt.toLowerCase().includes('nombres de los paises')) {
+            const paises = await getCountryNames();
+            response = `Los países en la base de datos son: ${paises.join(', ')}.`;
+        } else if (prompt.toLowerCase().includes('información del país')) {
+            const pais = extractCountryName(prompt);
+            const infoPais = await getCountryInfo(pais);
+            response = formatCountryInfo(infoPais);
+        } else if (prompt.toLowerCase().includes('información de la provincia')) {
+            const provincia = extractProvinceName(prompt);
+            const infoProvincia = await getProvinceInfo(provincia);
+            response = formatProvinceInfo(infoProvincia);
+        } else if (prompt.toLowerCase().includes('información del departamento')) {
+            const departamento = extractDepartmentName(prompt);
+            const infoDepartamento = await getDepartmentInfo(departamento);
+            response = formatDepartmentInfo(infoDepartamento);
+        } else if (prompt.toLowerCase().includes('información del año')) {
+            const año = extractYear(prompt);
+            const infoAño = await getYearInfo(año);
+            response = formatYearInfo(infoAño);
+        } else if (prompt.toLowerCase().includes('información de los años')) {
+            const [añoInicio, añoFin] = extractYearRange(prompt);
+            const infoAños = await getYearRangeInfo(añoInicio, añoFin);
+            response = formatYearRangeInfo(infoAños);
         } else {
-            res.status(500).json({error: 'Error al generar respuesta de Gemini'});
+            // Si no es una pregunta específica, usar el procesamiento existente
+            const dbData = await extractRelevantData(prompt);
+            const sentiment = analyzeSentiment(prompt);
+            const formattedData = formatDataForGemini(dbData);
+
+            const enhancedPrompt = `
+                Contexto de la conversación: ${context.map(c => `${c.role}: ${c.content}`).join('\n')}
+                Sentimiento del usuario: ${sentiment}
+                Información relevante de la base de datos: ${formattedData}
+                Pregunta del usuario: ${prompt}
+                Por favor, responde a la pregunta del usuario utilizando la información de la base de datos proporcionada. 
+                Si no hay información relevante, indícalo claramente en tu respuesta.
+            `;
+
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const result = await model.generateContent(enhancedPrompt);
+            response = result.response.text();
         }
+
+        // Actualizar el contexto de la conversación
+        context.push({ role: 'assistant', content: response });
+        conversationContext.set(userId, context.slice(-5));
+
+        // Cachear la respuesta
+        queryCache.set(prompt, response);
+
+        res.json({ output: response });
     } catch (error) {
         console.error('Error en el servidor (chat):', error);
-        res.status(500).json({error: 'Error en el servidor'});
+        res.status(500).json({ error: 'Error en el servidor' });
     }
 });
 
@@ -539,4 +548,197 @@ function getCountryNames() {
             }
         });
     });
+}
+
+async function getCountryInfo(pais) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT 
+                pais_nombre,
+                COUNT(DISTINCT provincia_nombre) as total_provincias,
+                MIN(ano_inicio) as ano_inicio,
+                MAX(ano_fin) as ano_fin,
+                SUM(CAST(cantidad_casos AS UNSIGNED)) as total_casos,
+                SUM(CAST(Muertes AS UNSIGNED)) as total_muertes,
+                AVG(CAST(Letalidad AS DECIMAL(10,2))) as letalidad_promedio
+            FROM dengue
+            WHERE pais_nombre = ?
+            GROUP BY pais_nombre
+        `;
+        db.query(query, [pais], (error, results) => {
+            if (error) reject(error);
+            else resolve(results[0]);
+        });
+    });
+}
+
+async function getProvinceInfo(provincia) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT 
+                pais_nombre,
+                provincia_nombre,
+                COUNT(DISTINCT departamento_nombre) as total_departamentos,
+                MIN(ano_inicio) as ano_inicio,
+                MAX(ano_fin) as ano_fin,
+                SUM(CAST(cantidad_casos AS UNSIGNED)) as total_casos,
+                AVG(CAST(tasa_de_Incidencia AS DECIMAL(10,2))) as tasa_incidencia_promedio
+            FROM dengue
+            WHERE provincia_nombre = ?
+            GROUP BY pais_nombre, provincia_nombre
+        `;
+        db.query(query, [provincia], (error, results) => {
+            if (error) reject(error);
+            else resolve(results[0]);
+        });
+    });
+}
+
+async function getDepartmentInfo(departamento) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT 
+                pais_nombre,
+                provincia_nombre,
+                departamento_nombre,
+                MIN(ano_inicio) as ano_inicio,
+                MAX(ano_fin) as ano_fin,
+                SUM(CAST(Confirmados_Laboratorio AS UNSIGNED)) as total_confirmados,
+                MAX(CAST(Poblacion_X_1000 AS UNSIGNED)) as poblacion_reciente
+            FROM dengue
+            WHERE departamento_nombre = ?
+            GROUP BY pais_nombre, provincia_nombre, departamento_nombre
+        `;
+        db.query(query, [departamento], (error, results) => {
+            if (error) reject(error);
+            else resolve(results[0]);
+        });
+    });
+}
+
+async function getYearInfo(año) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT 
+                COUNT(DISTINCT pais_nombre) as total_paises,
+                SUM(CAST(cantidad_casos AS UNSIGNED)) as total_casos,
+                SUM(CAST(Muertes AS UNSIGNED)) as total_muertes,
+                MAX(CASE WHEN CAST(cantidad_casos AS UNSIGNED) = (
+                    SELECT MAX(CAST(cantidad_casos AS UNSIGNED))
+                    FROM dengue
+                    WHERE ano_inicio = ? OR ano_fin = ?
+                ) THEN pais_nombre END) as pais_mas_casos
+            FROM dengue
+            WHERE ano_inicio = ? OR ano_fin = ?
+        `;
+        db.query(query, [año, año, año, año], (error, results) => {
+            if (error) reject(error);
+            else resolve(results[0]);
+        });
+    });
+}
+
+async function getYearRangeInfo(añoInicio, añoFin) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT 
+                ano_inicio,
+                SUM(CAST(cantidad_casos AS UNSIGNED)) as total_casos,
+                SUM(CAST(Muertes AS UNSIGNED)) as total_muertes,
+                AVG(CAST(Letalidad AS DECIMAL(10,2))) as letalidad_promedio
+            FROM dengue
+            WHERE ano_inicio BETWEEN ? AND ?
+            GROUP BY ano_inicio
+            ORDER BY ano_inicio
+        `;
+        db.query(query, [añoInicio, añoFin], (error, results) => {
+            if (error) reject(error);
+            else resolve(results);
+        });
+    });
+}
+
+function formatCountryInfo(info) {
+    if (!info) return "No se encontró información para este país.";
+    return `
+        País: ${info.pais_nombre}
+        Total de provincias: ${info.total_provincias}
+        Rango de años con datos: ${info.ano_inicio} - ${info.ano_fin}
+        Total de casos: ${info.total_casos}
+        Total de muertes: ${info.total_muertes}
+        Letalidad promedio: ${info.letalidad_promedio.toFixed(2)}%
+    `;
+}
+
+function formatProvinceInfo(info) {
+    if (!info) return "No se encontró información para esta provincia.";
+    return `
+        País: ${info.pais_nombre}
+        Provincia: ${info.provincia_nombre}
+        Total de departamentos: ${info.total_departamentos}
+        Rango de años con datos: ${info.ano_inicio} - ${info.ano_fin}
+        Total de casos: ${info.total_casos}
+        Tasa de incidencia promedio: ${info.tasa_incidencia_promedio}
+    `;
+}
+
+function formatDepartmentInfo(info) {
+    if (!info) return "No se encontró información para este departamento.";
+    return `
+        País: ${info.pais_nombre}
+        Provincia: ${info.provincia_nombre}
+        Departamento: ${info.departamento_nombre}
+        Rango de años con datos: ${info.ano_inicio} - ${info.ano_fin}
+        Total de casos confirmados por laboratorio: ${info.total_confirmados}
+        Población más reciente (x1000): ${info.poblacion_reciente}
+    `;
+}
+
+function formatYearInfo(info) {
+    if (!info) return "No se encontró información para este año.";
+    return `
+        Año: ${info.ano}
+        Total de países con casos reportados: ${info.total_paises}
+        Total de casos: ${info.total_casos}
+        Total de muertes: ${info.total_muertes}
+        País con más casos: ${info.pais_mas_casos}
+    `;
+}
+
+function formatYearRangeInfo(info) {
+    if (!info || info.length === 0) return "No se encontró información para este rango de años.";
+    let response = `Información para el rango de años ${info[0].ano_inicio} - ${info[info.length-1].ano_inicio}:\n`;
+    info.forEach(year => {
+        response += `
+        Año ${year.ano_inicio}:
+        - Total de casos: ${year.total_casos}
+        - Total de muertes: ${year.total_muertes}
+        - Letalidad promedio: ${year.letalidad_promedio.toFixed(2)}%\n`;
+    });
+    return response;
+}
+
+function extractCountryName(prompt) {
+    const match = prompt.match(/país\s+(\w+)/i);
+    return match ? match[1] : null;
+}
+
+function extractProvinceName(prompt) {
+    const match = prompt.match(/provincia\s+(\w+)/i);
+    return match ? match[1] : null;
+}
+
+function extractDepartmentName(prompt) {
+    const match = prompt.match(/departamento\s+(\w+)/i);
+    return match ? match[1] : null;
+}
+
+function extractYear(prompt) {
+    const match = prompt.match(/año\s+(\d{4})/i);
+    return match ? match[1] : null;
+}
+
+function extractYearRange(prompt) {
+    const match = prompt.match(/años\s+(\d{4})\s+a\s+(\d{4})/i);
+    return match ? [match[1], match[2]] : null;
 }

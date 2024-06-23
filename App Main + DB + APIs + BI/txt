@@ -23,8 +23,11 @@ pm2 logs
 
 ChatBOT: País: ${row.pais_nombre}, Provincia: ${row.provincia_nombre}, Año: ${row.ano_inicio}-${row.ano_fin},
 Hola?
-Cuanto países tenemos?
-los nombres de los paises || Dame los nombres de los países?
+1. cuántos países
+2. nombres de los países
+3. información del país Argentina
+4. información de la provincia CABA
+5. información del departamento Ituzaingo
 Bolivia
 Peru
 Tucumán
