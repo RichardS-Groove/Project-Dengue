@@ -9,6 +9,11 @@ max_allowed_packet=512M
 
 Crea .env
 API_KEY=''
+DB_HOST=''
+DB_USERNAME=''
+DB_PASSWORD=''
+DB_DATABASE=''
+DB_PORT=''
 
 PM2:
 pm2 start server.js

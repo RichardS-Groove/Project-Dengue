@@ -6,23 +6,27 @@ const fs = require('fs');
 const xlsx = require('xlsx');
 const puppeteer = require('puppeteer');
 const {createWorker} = require('tesseract.js');
-const worker = createWorker();  // Create the worker object
 const {GoogleGenerativeAI} = require("@google/generative-ai");
 const bodyParser = require('body-parser');
-require('dotenv').config(); // Carga las variables de entorno desde el archivo .env
+require('dotenv').config();
 const natural = require('natural');
 const tokenizer = new natural.WordTokenizer();
 
 // Configuración para servir archivos estáticos desde la carpeta 'public'
 app.use(express.static('public'));
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
 
 // Configuración de la conexión a MySQL
 const db = mysql.createConnection({
-    host: 'Dae',
-    port: 3306,
-    user: 'root',
-    password: 'Cambio2024',
-    database: 'epidemia'
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
 });
 
 // Configuración de Multer
@@ -33,10 +37,6 @@ const upload = multer({
     limits: {fileSize: 10 * 1024 * 1024}, // Límite de tamaño de archivo (en bytes), aquí 10 MB
 });
 
-app.use(express.json());
-app.use(express.urlencoded({extended: true}));
-app.use(bodyParser.json());
-
 const uploadMultipleFiles = upload.array('excelfiles', 10); // Agrega esta línea
 
 // Permitir solicitudes desde cualquier origen (CORS)
@@ -45,10 +45,6 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
 });
-
-app.use(express.json());
-app.use(express.urlencoded({extended: true}));
-
 
 // Ruta para la página principal
 app.get('/', (req, res) => {
