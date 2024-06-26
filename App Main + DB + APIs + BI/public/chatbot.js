@@ -36,3 +36,15 @@ chatForm.addEventListener('submit', async (e) => {
         promptInput.value = '';
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const promptInput = document.getElementById('prompt');
+    const questionSelect = document.getElementById('questionSelect');
+
+    questionSelect.addEventListener('change', function() {
+        if (this.value) {
+            promptInput.value = this.value;
+            promptInput.focus();
+        }
+    });
+});

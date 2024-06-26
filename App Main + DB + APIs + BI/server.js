@@ -52,7 +52,7 @@ app.get('/', (req, res) => {
 });
 
 // Ruta para la página Chatbot
-app.get('/Chat', (req, res) => {
+app.get('/Chatbot', (req, res) => {
     res.sendFile(__dirname + '/chatbot.html');
 });
 

@@ -1,19 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot</title>
+    <title>Chatbot Edesur</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="chatbot.css">
 </head>
 <body>
+
+<div class="logo-container0">
+    <img src="/img/LOGO-CENTRADO-BLANCO-retina-mobile.png" alt="Imagen">
+</div>
 <div class="chat-container">
-    <h1>Chatbot</h1>
-    <div class="chat-messages" id="chatMessages"></div>
-    <form id="chatForm">
-        <input type="text" id="prompt" placeholder="Ingresa tu pregunta o instrucción">
-        <button type="submit">Enviar</button>
+    <div class="chat-header">
+        <img src="/img/LOGO-CENTRADO-BLANCO-retina-mobile.png" alt="Edesur Logo" class="logo">
+        <h1>Chatbot Edesur</h1>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+        <!-- Los mensajes se agregarán aquí dinámicamente -->
+    </div>
+    <form id="chatForm" class="chat-input">
+        <input type="text" id="prompt" placeholder="Escribe tu mensaje aquí...">
+        <button type="submit"><i class="fas fa-paper-plane"></i></button>
     </form>
+
+    <div class="preset-questions">
+        <select id="questionSelect">
+            <option value="">Selecciona una pregunta frecuente</option>
+            <option value="¿Cuál es el horario de atención?">¿Cuál es el horario de atención?</option>
+            <option value="¿Cómo puedo pagar mi factura?">¿Cómo puedo pagar mi factura?</option>
+            <option value="¿Qué hago si hay un corte de luz?">¿Qué hago si hay un corte de luz?</option>
+            <option value="¿Cómo puedo dar de alta un nuevo servicio?">¿Cómo puedo dar de alta un nuevo servicio?
+            </option>
+        </select>
+    </div>
 </div>
 <script src="chatbot.js"></script>
 </body>
