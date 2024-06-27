@@ -8,9 +8,7 @@ const createTableMessage = document.getElementById('create-table-message');
 const createscrapingocrtablemessage = document.getElementById('create-scraping-ocr-table-message');
 const scrapeMessage = document.getElementById('scrape-message');
 const urlInput = document.getElementById('url');
-
 const createScrapingOcrTableBtn = document.getElementById('createScrapingOcrTableBtn');
-
 const scrapeForm = document.getElementById('scrapeForm');
 
 scrapeForm.addEventListener('submit', async (event) => {

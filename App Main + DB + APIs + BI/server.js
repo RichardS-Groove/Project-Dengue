@@ -400,18 +400,18 @@ app.use(express.json());
 // Chatbot con Gemini y extracción de datos de MySQL
 app.post('/chat', async (req, res) => {
     try {
-        const { prompt, userId } = req.body;
+        const {prompt, userId} = req.body;
 
         // Obtener o inicializar el contexto de la conversación
         let context = conversationContext.get(userId) || [];
-        context.push({ role: 'user', content: prompt });
+        context.push({role: 'user', content: prompt});
 
         // Verificar si la consulta está en caché
         const cachedResponse = queryCache.get(prompt);
         if (cachedResponse) {
-            context.push({ role: 'assistant', content: cachedResponse });
+            context.push({role: 'assistant', content: cachedResponse});
             conversationContext.set(userId, context.slice(-5));
-            return res.json({ output: cachedResponse });
+            return res.json({output: cachedResponse});
         }
 
         let response = '';
@@ -458,22 +458,22 @@ app.post('/chat', async (req, res) => {
                 Si no hay información relevante, indícalo claramente en tu respuesta.
             `;
 
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"});
             const result = await model.generateContent(enhancedPrompt);
             response = result.response.text();
         }
 
         // Actualizar el contexto de la conversación
-        context.push({ role: 'assistant', content: response });
+        context.push({role: 'assistant', content: response});
         conversationContext.set(userId, context.slice(-5));
 
         // Cachear la respuesta
         queryCache.set(prompt, response);
 
-        res.json({ output: response });
+        res.json({output: response});
     } catch (error) {
         console.error('Error en el servidor (chat):', error);
-        res.status(500).json({ error: 'Error en el servidor' });
+        res.status(500).json({error: 'Error en el servidor'});
     }
 });
 
@@ -722,7 +722,7 @@ function formatYearInfo(info) {
 
 function formatYearRangeInfo(info) {
     if (!info || info.length === 0) return "No se encontró información para este rango de años.";
-    let response = `Información para el rango de años ${info[0].ano_inicio} - ${info[info.length-1].ano_inicio}:\n`;
+    let response = `Información para el rango de años ${info[0].ano_inicio} - ${info[info.length - 1].ano_inicio}:\n`;
     info.forEach(year => {
         response += `
         Año ${year.ano_inicio}:

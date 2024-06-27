@@ -22,7 +22,7 @@ chatForm.addEventListener('submit', async (e) => {
                     'Content-Type': 'application/json',
                     'Authorization': `Basic ${base64Credentials}`
                 },
-                body: JSON.stringify({ prompt }),
+                body: JSON.stringify({prompt}),
             });
 
             const data = await response.json();
@@ -37,11 +37,11 @@ chatForm.addEventListener('submit', async (e) => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const promptInput = document.getElementById('prompt');
     const questionSelect = document.getElementById('questionSelect');
 
-    questionSelect.addEventListener('change', function() {
+    questionSelect.addEventListener('change', function () {
         if (this.value) {
             promptInput.value = this.value;
             promptInput.focus();
