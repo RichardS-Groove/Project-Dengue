@@ -138,6 +138,3 @@ uploadBtn.addEventListener('click', () => {
 
     xhr.send(formData);
 });
-
-
-
