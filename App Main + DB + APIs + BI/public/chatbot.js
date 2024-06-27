@@ -9,6 +9,9 @@ const base64Credentials = btoa(credentials);
 chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const prompt = promptInput.value.trim();
+    const response = await fetch('/env');
+    const env = await response.json();
+    const chatApiUrl = env.chatApiUrl;
 
     if (prompt) {
         const userMessage = document.createElement('div');
@@ -16,7 +19,7 @@ chatForm.addEventListener('submit', async (e) => {
         chatMessages.appendChild(userMessage);
 
         try {
-            const response = await fetch('http://localhost:3000/chat', {
+            const response = await fetch(chatApiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

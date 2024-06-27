@@ -66,6 +66,7 @@ app.get('/env', (req, res) => {
         apiPm2Url: process.env.API_PM2_URL,
         apiNgrokUrl: process.env.API_NGROK_URL,
         apiOnlineUrl: process.env.APP_ONLINE,
+        chatApiUrl: process.env.CHAT_API_URL,
     });
 });
 

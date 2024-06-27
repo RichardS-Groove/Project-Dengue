@@ -21,6 +21,7 @@ API_SCRAPING_OCR_URL='http://localhost:3000/epidemia/scraping_ocr_dengue'
 API_PM2_URL='https://app.pm2.io/bucket/66379e49221ecc22db00450f/backend/overview/servers?access_token=5z0q0xr28wfmy9cd0sox7vi38ayq3tnyxr11suugqqducpvrs4c18te0qst39bdb&token_type=refresh_token'
 API_NGROK_URL='https://dashboard.ngrok.com/usage'
 APP_ONLINE=''
+CHAT_API_URL='http://localhost:3000/chat'
 
 PM2:
 pm2 start server.js
