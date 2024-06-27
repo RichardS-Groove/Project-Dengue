@@ -34,6 +34,9 @@
         <a href="<%= apiChatbotUrl %>" target="_blank" id="apiChatbotLink">
             <button type="button" id="new-link-btn">UNLZ: Chatbot Dengue</button>
         </a>
+        <a href="<%= apiChatbotUrl %>" target="_blank" id="apiOnlineLink">
+            <button type="button" id="new-link-btn">APP ONLINE</button>
+        </a>
         <p id="create-table-message"></p>
     </div>
     <div id="container2">
@@ -49,6 +52,12 @@
         <a href="<%= apiScrapingOcrUrl %>" target="_blank" id="apiScrapingOcrLink">
             <button type="button" id="new-link-btn">API: Epidemia Scraping & OCR Dengue</button>
         </a>
+        <a href="<%= apiScrapingOcrUrl %>" target="_blank" id="apiPm2Link">
+            <button type="button" id="new-link-btn">Monitor PM2 - On Premise</button>
+        </a>
+        <a href="<%= apiScrapingOcrUrl %>" target="_blank" id="apiNgrokLink">
+            <button type="button" id="new-link-btn">Monitor T-CLOUD - Ngrok</button>
+        </a>
         <p id="create-scraping-ocr-table-message"></p>
     </div>
 </div>
@@ -59,6 +68,9 @@
             document.getElementById('apiEpDeLink').href = env.apiEpDeUrl;
             document.getElementById('apiChatbotLink').href = env.apiChatbotUrl;
             document.getElementById('apiScrapingOcrLink').href = env.apiScrapingOcrUrl;
+            document.getElementById('apiPm2Link').href = env.apiPm2Url;
+            document.getElementById('apiNgrokLink').href = env.apiNgrokUrl;
+            document.getElementById('apiOnlineLink').href = env.apiOnlineUrl;
         })
         .catch(error => console.error('Error loading environment variables:', error));
 </script>

@@ -62,7 +62,10 @@ app.get('/env', (req, res) => {
     res.json({
         apiEpDeUrl: process.env.API_EP_DE_URL,
         apiChatbotUrl: process.env.API_CHATBOT_URL,
-        apiScrapingOcrUrl: process.env.API_SCRAPING_OCR_URL
+        apiScrapingOcrUrl: process.env.API_SCRAPING_OCR_URL,
+        apiPm2Url: process.env.API_PM2_URL,
+        apiNgrokUrl: process.env.API_NGROK_URL,
+        apiOnlineUrl: process.env.APP_ONLINE,
     });
 });
 
