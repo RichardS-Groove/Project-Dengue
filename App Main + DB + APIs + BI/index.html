@@ -28,10 +28,10 @@
         <p id="message"></p>
         <button type="button" id="create-table-btn">Crear: Tabla Dengue</button>
         <!-- Nuevo botón aquí -->
-        <a href="http://localhost:3000/epidemia/dengue" target="_blank">
+        <a href="<%= apiEpDeUrl %>" target="_blank" id="apiEpDeLink">
             <button type="button" id="new-link-btn">API: Epidemia Dengue</button>
         </a>
-        <a href="http://localhost:3000/Chatbot" target="_blank">
+        <a href="<%= apiChatbotUrl %>" target="_blank" id="apiChatbotLink">
             <button type="button" id="new-link-btn">UNLZ: Chatbot Dengue</button>
         </a>
         <p id="create-table-message"></p>
@@ -46,12 +46,22 @@
         <p id="scrape-message"></p>
         <button type="button" id="createScrapingOcrTableBtn">Crear: Tabla Scraping & OCR Dengue</button>
         <!-- Nuevo botón aquí -->
-        <a href="http://localhost:3000/epidemia/scraping_ocr_dengue" target="_blank">
+        <a href="<%= apiScrapingOcrUrl %>" target="_blank" id="apiScrapingOcrLink">
             <button type="button" id="new-link-btn">API: Epidemia Scraping & OCR Dengue</button>
         </a>
         <p id="create-scraping-ocr-table-message"></p>
     </div>
 </div>
+<script>
+    fetch('/env')
+        .then(response => response.json())
+        .then(env => {
+            document.getElementById('apiEpDeLink').href = env.apiEpDeUrl;
+            document.getElementById('apiChatbotLink').href = env.apiChatbotUrl;
+            document.getElementById('apiScrapingOcrLink').href = env.apiScrapingOcrUrl;
+        })
+        .catch(error => console.error('Error loading environment variables:', error));
+</script>
 <script src="script.js"></script>
 </body>
 </html>

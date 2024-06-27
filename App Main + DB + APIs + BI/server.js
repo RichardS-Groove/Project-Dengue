@@ -11,6 +11,9 @@ const bodyParser = require('body-parser');
 require('dotenv').config();
 const natural = require('natural');
 const tokenizer = new natural.WordTokenizer();
+const dotenv = require('dotenv');
+const path = require('path');
+dotenv.config();
 
 // Configuración para servir archivos estáticos desde la carpeta 'public'
 app.use(express.static('public'));
@@ -19,6 +22,9 @@ app.use(express.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // Configuración de la conexión a MySQL
 const db = mysql.createConnection({
@@ -49,6 +55,15 @@ app.use((req, res, next) => {
 // Ruta para la página principal
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
+});
+
+// Ruta para obtener las variables de entorno
+app.get('/env', (req, res) => {
+    res.json({
+        apiEpDeUrl: process.env.API_EP_DE_URL,
+        apiChatbotUrl: process.env.API_CHATBOT_URL,
+        apiScrapingOcrUrl: process.env.API_SCRAPING_OCR_URL
+    });
 });
 
 // Ruta para la página Chatbot

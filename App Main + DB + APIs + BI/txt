@@ -14,6 +14,10 @@ DB_USERNAME=''
 DB_PASSWORD=''
 DB_DATABASE=''
 DB_PORT=''
+API_BASE_URL='http://localhost:3000'
+API_EP_DE_URL='http://localhost:3000/epidemia/dengue'
+API_CHATBOT_URL='http://localhost:3000/Chatbot'
+API_SCRAPING_OCR_URL='http://localhost:3000/epidemia/scraping_ocr_dengue'
 
 PM2:
 pm2 start server.js
